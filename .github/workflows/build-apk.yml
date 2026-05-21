@@ -47,14 +47,26 @@ jobs:
           gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
+            grep -Ei "^(e:|error:|warning:)|Compilation error|Unresolved reference|None of the following|Type mismatch|Cannot access|FAILURE|Caused by" build.log > build-errors.log || true
             {
               echo "### Gradle build failed"
               echo
+              echo "#### Extracted compiler errors"
+              echo
               echo '```text'
-              tail -120 build.log
+              cat build-errors.log
+              echo '```'
+              echo
+              echo "#### Log tail"
+              echo
+              echo '```text'
+              tail -80 build.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
-            message="$(tail -60 build.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            message="$(cat build-errors.log | head -80 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            if [ -z "$message" ]; then
+              message="$(tail -60 build.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            fi
             echo "::error title=Gradle build failed::$message"
             exit "$status"
           fi
@@ -64,7 +76,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ClinixGo-build-log
-          path: build.log
+          path: |
+            build.log
+            build-errors.log
           if-no-files-found: ignore
 
       - name: Upload APK artifact
