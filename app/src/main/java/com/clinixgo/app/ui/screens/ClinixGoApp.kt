@@ -425,8 +425,9 @@ fun ScanScreen(aiService: PrescriptionAiService, onReview: (ScanDraft) -> Unit) 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             ElevatedButton(
                 onClick = {
-                    cameraUri = createCameraUri()
-                    cameraLauncher.launch(cameraUri)
+                    val uri = createCameraUri()
+                    cameraUri = uri
+                    cameraLauncher.launch(uri)
                 },
                 modifier = Modifier.weight(1f)
             ) {
